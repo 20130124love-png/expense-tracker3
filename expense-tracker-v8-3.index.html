@@ -1,0 +1,2409 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>個人日常記帳本 v7（深色護眼版）</title>
+  <style>
+    :root {
+      /* 預設深色護眼模式（低對比、暖灰字體、減少藍光刺眼） */
+      --bg: #121619;
+      --card: #1a2026;
+      --surface-2: #222a32;
+      --input-bg: #151a1f;
+      --text: #e6e1d6;
+      --muted: #9aa5b1;
+      --border: #2d3741;
+      --primary: #4f8ef7;
+      --primary-hover: #3b7ae6;
+      --income: #4ade80;
+      --income-bg: rgba(74, 222, 128, 0.14);
+      --income-border: rgba(74, 222, 128, 0.35);
+      --expense: #f87171;
+      --expense-bg: rgba(248, 113, 113, 0.14);
+      --expense-border: rgba(248, 113, 113, 0.35);
+      --card-tag-bg: rgba(192, 132, 252, 0.16);
+      --card-tag-text: #d8b4fe;
+      --card-box-bg: rgba(168, 85, 247, 0.08);
+      --card-box-border: rgba(192, 132, 252, 0.28);
+      --bill-tag-bg: rgba(79, 142, 247, 0.16);
+      --bill-tag-text: #93c5fd;
+      --pay-tag-bg: #27313b;
+      --pay-tag-text: #cbd5e1;
+      --detail-tag-bg: rgba(251, 191, 36, 0.12);
+      --detail-tag-text: #fcd34d;
+      --bar-track: #2c353f;
+      --focus-ring: rgba(79, 142, 247, 0.25);
+      --backdrop: rgba(5, 8, 12, 0.72);
+      --radius: 12px;
+      --shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    }
+
+    body.light-mode {
+      --bg: #f4f6f9;
+      --card: #ffffff;
+      --surface-2: #f8fafc;
+      --input-bg: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --income: #16a34a;
+      --income-bg: #dcfce7;
+      --income-border: #86efac;
+      --expense: #dc2626;
+      --expense-bg: #fee2e2;
+      --expense-border: #fca5a5;
+      --card-tag-bg: #f3e8ff;
+      --card-tag-text: #7e22ce;
+      --card-box-bg: #faf5ff;
+      --card-box-border: #e9d5ff;
+      --bill-tag-bg: #eff6ff;
+      --bill-tag-text: #2563eb;
+      --pay-tag-bg: #f1f5f9;
+      --pay-tag-text: #475569;
+      --detail-tag-bg: #fef3c7;
+      --detail-tag-text: #92400e;
+      --bar-track: #e2e8f0;
+      --focus-ring: rgba(37, 99, 235, 0.15);
+      --backdrop: rgba(15, 23, 42, 0.45);
+      --shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 24px 16px 48px;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .sync-pill {
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--muted);
+    }
+
+    .sync-pill.connected {
+      background: var(--income-bg);
+      color: var(--income);
+      border-color: var(--income-border);
+    }
+
+    .sync-pill.error {
+      background: var(--expense-bg);
+      color: var(--expense);
+      border-color: var(--expense-border);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.15s ease;
+    }
+
+    button:hover {
+      background: var(--surface-2);
+    }
+
+    button.primary {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    button.primary:hover {
+      background: var(--primary-hover);
+    }
+
+    button.danger {
+      color: var(--expense);
+      border-color: var(--expense-border);
+    }
+
+    button.danger:hover {
+      background: var(--expense-bg);
+    }
+
+    /* Summary Cards */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .summary-label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .summary-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+    }
+
+    .summary-value.income { color: var(--income); }
+    .summary-value.expense { color: var(--expense); }
+
+    /* Main Layout */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    @media (max-width: 780px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card h2 {
+      font-size: 1.05rem;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+      gap: 8px;
+    }
+
+    .label-row label {
+      margin-bottom: 0;
+    }
+
+    .text-link {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-size: 0.8rem;
+      padding: 0;
+      font-weight: 600;
+    }
+
+    .text-link:hover {
+      background: none;
+      text-decoration: underline;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: var(--text);
+      background: var(--input-bg);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 68px;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--focus-ring);
+    }
+
+    .inline-add-box {
+      display: none;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .inline-add-box.show {
+      display: flex;
+    }
+
+    .inline-add-box input {
+      padding: 6px 10px;
+      font-size: 0.88rem;
+    }
+
+    .inline-add-box button {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    .status-msg {
+      font-size: 0.8rem;
+      margin-top: 5px;
+      min-height: 1.1em;
+    }
+
+    .status-msg.ok { color: var(--income); }
+    .status-msg.err { color: var(--expense); }
+
+    .type-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .type-btn {
+      padding: 8px;
+      text-align: center;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-weight: 600;
+      background: var(--surface-2);
+      color: var(--muted);
+    }
+
+    .type-btn.active.expense {
+      background: var(--expense-bg);
+      color: var(--expense);
+      border-color: var(--expense-border);
+    }
+
+    .type-btn.active.income {
+      background: var(--income-bg);
+      color: var(--income);
+      border-color: var(--income-border);
+    }
+
+    .credit-card-box {
+      background: var(--card-box-bg);
+      border: 1px solid var(--card-box-border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    .credit-card-box.show {
+      display: block;
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+      align-items: center;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .filter-group span {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+
+    /* Breakdown Panels */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .breakdown {
+      padding: 12px 14px;
+      background: var(--surface-2);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .breakdown.card-summary {
+      background: var(--card-box-bg);
+      border-color: var(--card-box-border);
+    }
+
+    .breakdown-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .breakdown.card-summary .breakdown-title {
+      color: var(--card-tag-text);
+    }
+
+    .bar-row {
+      margin-bottom: 8px;
+    }
+
+    .bar-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .bar-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      margin-bottom: 3px;
+    }
+
+    .bar-track {
+      height: 7px;
+      background: var(--bar-track);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 99px;
+    }
+
+    .breakdown.card-summary .bar-fill {
+      background: #a855f7;
+    }
+
+    /* Records List */
+    .record-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .record-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 11px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-2);
+      gap: 10px;
+    }
+
+    .record-left {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .badge {
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      margin-top: 2px;
+    }
+
+    .badge.expense {
+      background: var(--expense-bg);
+      color: var(--expense);
+    }
+
+    .badge.income {
+      background: var(--income-bg);
+      color: var(--income);
+    }
+
+    .record-meta {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .record-details {
+      font-weight: 600;
+      font-size: 0.94rem;
+      color: var(--text);
+      white-space: pre-line;
+      word-break: break-word;
+    }
+
+    .record-note {
+      font-size: 0.82rem;
+      color: var(--detail-tag-text);
+      background: var(--detail-tag-bg);
+      padding: 4px 8px;
+      border-radius: 6px;
+      margin-top: 5px;
+      word-break: break-word;
+    }
+
+    .record-date {
+      font-size: 0.78rem;
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      margin-top: 5px;
+    }
+
+    .bill-tag {
+      background: var(--bill-tag-bg);
+      color: var(--bill-tag-text);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .pay-tag {
+      background: var(--pay-tag-bg);
+      color: var(--pay-tag-text);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .card-tag {
+      background: var(--card-tag-bg);
+      color: var(--card-tag-text);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .record-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .record-amount {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .record-amount.expense { color: var(--expense); }
+    .record-amount.income { color: var(--income); }
+
+    .edit-btn, .del-btn {
+      padding: 4px 8px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .edit-btn:hover {
+      color: var(--primary);
+      border-color: var(--primary);
+      background: var(--bill-tag-bg);
+    }
+
+    .del-btn:hover {
+      color: var(--expense);
+      border-color: var(--expense-border);
+      background: var(--expense-bg);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: var(--backdrop);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 100;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      max-width: 520px;
+      width: 100%;
+      padding: 20px;
+      box-shadow: var(--shadow);
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-header h3 {
+      font-size: 1.05rem;
+    }
+
+    .manager-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .manager-tab-btn {
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      background: var(--surface-2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .manager-tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .manager-panel {
+      display: none;
+    }
+
+    .manager-panel.active {
+      display: block;
+    }
+
+    .add-cat-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .add-cat-row select {
+      width: 125px;
+      flex-shrink: 0;
+    }
+
+    .cat-tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+      min-height: 36px;
+    }
+
+    .cat-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      padding: 5px 10px;
+      border-radius: 99px;
+      font-size: 0.85rem;
+      user-select: none;
+      transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease, opacity 0.12s ease;
+    }
+
+    .cat-chip.draggable {
+      cursor: grab;
+    }
+
+    .cat-chip.draggable:active {
+      cursor: grabbing;
+    }
+
+    .cat-chip.dragging {
+      opacity: 0.45;
+      transform: scale(0.97);
+    }
+
+    .cat-chip.drag-over {
+      border-color: var(--primary);
+      border-style: dashed;
+      background: var(--bill-tag-bg);
+    }
+
+    .drag-handle {
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1;
+      letter-spacing: -2px;
+    }
+
+    .cat-chip button {
+      border: none;
+      background: none;
+      padding: 0 2px;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .cat-chip button:hover {
+      color: var(--expense);
+      background: none;
+    }
+
+    .cat-section-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-top: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .drag-hint {
+      font-size: 0.74rem;
+      font-weight: 400;
+      color: var(--muted);
+    }
+
+    .help-text {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.45;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .modal-actions-right {
+      display: flex;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="title-group">
+        <h1>個人日常記帳本</h1>
+        <span class="sync-pill" id="syncStatusPill">單機模式</span>
+      </div>
+      <div class="header-actions">
+        <button type="button" id="toggleThemeBtn">淺色模式</button>
+        <button type="button" id="openSettingsBtn">設定</button>
+        <button type="button" id="manageCardsBtn">管理信用卡</button>
+        <button type="button" id="manageBtn">管理</button>
+        <button type="button" id="exportCsvBtn">匯出 CSV</button>
+        <button type="button" id="clearAllBtn" class="danger">清空資料</button>
+      </div>
+    </header>
+
+    <!-- 統計摘要 -->
+    <section class="summary-grid">
+      <div class="card">
+        <div class="summary-label">篩選帳單總收入</div>
+        <div class="summary-value income" id="totalIncome">NT$ 0</div>
+      </div>
+      <div class="card">
+        <div class="summary-label">篩選帳單總支出</div>
+        <div class="summary-value expense" id="totalExpense">NT$ 0</div>
+      </div>
+      <div class="card">
+        <div class="summary-label">結餘</div>
+        <div class="summary-value" id="netBalance">NT$ 0</div>
+      </div>
+    </section>
+
+    <div class="main-grid">
+      <!-- 新增紀錄表單 -->
+      <section class="card">
+        <h2>新增一筆紀錄</h2>
+        <form id="recordForm">
+          <div class="type-toggle">
+            <button type="button" class="type-btn active expense" data-type="expense">支出</button>
+            <button type="button" class="type-btn income" data-type="income">收入</button>
+          </div>
+
+          <div class="form-group">
+            <label for="dateInput">消費 / 入帳日期</label>
+            <input type="date" id="dateInput" required />
+          </div>
+
+          <div class="form-group">
+            <label for="billMonthInput">歸屬帳單月份</label>
+            <input type="month" id="billMonthInput" required />
+          </div>
+
+          <div class="form-group">
+            <label for="categoryInput">分類</label>
+            <select id="categoryInput" required></select>
+          </div>
+
+          <div class="form-group">
+            <label for="paymentMethodInput">支付 / 收款方式</label>
+            <select id="paymentMethodInput" required></select>
+          </div>
+
+          <div class="credit-card-box" id="creditCardBox">
+            <div class="label-row">
+              <label for="creditCardInput" style="color: var(--card-tag-text); font-weight: 600;">使用哪張信用卡</label>
+              <button type="button" class="text-link" id="toggleInlineCardBtn" style="color: var(--card-tag-text);">+ 新增銀行/卡片</button>
+            </div>
+            <select id="creditCardInput"></select>
+            <div class="inline-add-box" id="inlineCardBox">
+              <input type="text" id="inlineCardInput" placeholder="例如：國泰 CUBE、玉山 UBear..." />
+              <button type="button" class="primary" id="inlineSaveCardBtn">新增</button>
+            </div>
+            <div class="status-msg" id="inlineCardStatusMsg"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="amountInput">金額 (NT$)</label>
+            <input type="number" id="amountInput" min="1" step="1" placeholder="例如：150" required />
+          </div>
+
+          <div class="form-group">
+            <label for="detailsInput">消費明細</label>
+            <textarea id="detailsInput" placeholder="可詳細填寫品項、數量、單價或拆帳說明，例如：&#10;原味蛋餅 $35、冰豆漿 $25、薯餅 $30"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="noteInput">備註</label>
+            <input type="text" id="noteInput" placeholder="例如：早餐、網購、高鐵票" />
+          </div>
+
+          <button type="submit" class="primary" style="width: 100%; margin-top: 4px;">加入紀錄</button>
+          <div class="status-msg" id="formStatusMsg"></div>
+        </form>
+      </section>
+
+      <!-- 明細與篩選 -->
+      <section class="card">
+        <h2>
+          <span>收支明細與統計</span>
+          <button type="button" id="refreshCloudBtn" style="padding: 4px 10px; font-size: 0.8rem;">重新同步</button>
+        </h2>
+
+        <div class="filter-bar">
+          <div class="filter-group">
+            <span>帳單月份</span>
+            <input type="month" id="billMonthFilter" title="依帳單月份篩選" />
+          </div>
+          <div class="filter-group">
+            <span>收支類型</span>
+            <select id="typeFilter">
+              <option value="all">全部收支</option>
+              <option value="expense">僅看支出</option>
+              <option value="income">僅看收入</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span>分類</span>
+            <select id="categoryFilter">
+              <option value="all">所有分類</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span>支付方式 / 信用卡</span>
+            <select id="paymentFilter">
+              <option value="all">全部方式</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 統計圖表區：各家銀行信用卡統計 & 分類佔比 -->
+        <div class="stats-grid" id="statsGrid" style="display: none;">
+          <div class="breakdown card-summary" id="cardSummaryBox" style="display: none;">
+            <div class="breakdown-title">
+              <span>各家銀行信用卡消費統計</span>
+              <span id="totalCardSpend">NT$ 0</span>
+            </div>
+            <div id="cardSummaryList"></div>
+          </div>
+
+          <div class="breakdown" id="breakdownBox" style="display: none;">
+            <div class="breakdown-title">
+              <span>支出分類佔比</span>
+            </div>
+            <div id="breakdownList"></div>
+          </div>
+        </div>
+
+        <div class="record-list" id="recordList"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- 編輯紀錄視窗 -->
+  <div class="modal-backdrop" id="editRecordModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>編輯記帳紀錄</h3>
+        <button type="button" id="closeEditModalBtn">關閉</button>
+      </div>
+      <form id="editRecordForm">
+        <div class="type-toggle">
+          <button type="button" class="type-btn expense" id="editTypeExpenseBtn" data-type="expense">支出</button>
+          <button type="button" class="type-btn income" id="editTypeIncomeBtn" data-type="income">收入</button>
+        </div>
+
+        <div class="form-group">
+          <label for="editDateInput">消費 / 入帳日期</label>
+          <input type="date" id="editDateInput" required />
+        </div>
+
+        <div class="form-group">
+          <label for="editBillMonthInput">歸屬帳單月份</label>
+          <input type="month" id="editBillMonthInput" required />
+        </div>
+
+        <div class="form-group">
+          <label for="editCategoryInput">分類</label>
+          <select id="editCategoryInput" required></select>
+        </div>
+
+        <div class="form-group">
+          <label for="editPaymentMethodInput">支付 / 收款方式</label>
+          <select id="editPaymentMethodInput" required></select>
+        </div>
+
+        <div class="credit-card-box" id="editCreditCardBox">
+          <label for="editCreditCardInput" style="color: var(--card-tag-text); font-weight: 600;">使用哪張信用卡</label>
+          <select id="editCreditCardInput"></select>
+        </div>
+
+        <div class="form-group">
+          <label for="editAmountInput">金額 (NT$)</label>
+          <input type="number" id="editAmountInput" min="1" step="1" required />
+        </div>
+
+        <div class="form-group">
+          <label for="editDetailsInput">消費明細</label>
+          <textarea id="editDetailsInput" placeholder="可詳細填寫品項、數量、單價或拆帳說明"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="editNoteInput">備註</label>
+          <input type="text" id="editNoteInput" placeholder="例如：早餐、網購、高鐵票" />
+        </div>
+
+        <div class="status-msg" id="editModalStatusMsg"></div>
+        <div class="modal-actions">
+          <button type="button" id="cancelEditBtn">取消</button>
+          <button type="submit" class="primary">儲存修改</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 統一管理視窗：分類 & 支付/收款方式 -->
+  <div class="modal-backdrop" id="manageModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>管理</h3>
+        <button type="button" id="closeManageModalBtn">關閉</button>
+      </div>
+
+      <div class="manager-tabs">
+        <button type="button" class="manager-tab-btn active" data-tab="category">分類</button>
+        <button type="button" class="manager-tab-btn" data-tab="payment">支付 / 收款方式</button>
+      </div>
+
+      <!-- 分類管理分頁 -->
+      <div class="manager-panel active" id="panel-category">
+        <div class="add-cat-row">
+          <select id="newCatType">
+            <option value="expense">支出</option>
+            <option value="income">收入</option>
+          </select>
+          <input type="text" id="newCatName" placeholder="輸入新分類名稱..." />
+          <button type="button" class="primary" id="saveNewCatBtn">新增</button>
+        </div>
+        <div class="status-msg" id="modalStatusMsg"></div>
+
+        <div class="cat-section-label">
+          <span>支出分類</span>
+          <span class="drag-hint">按住標籤可拖曳調整順序</span>
+        </div>
+        <div class="cat-tag-list" id="expenseCatList"></div>
+
+        <div class="cat-section-label">
+          <span>收入分類</span>
+          <span class="drag-hint">按住標籤可拖曳調整順序</span>
+        </div>
+        <div class="cat-tag-list" id="incomeCatList"></div>
+      </div>
+
+      <!-- 支付 / 收款方式管理分頁 -->
+      <div class="manager-panel" id="panel-payment">
+        <div class="add-cat-row">
+          <select id="newPaymentType">
+            <option value="expense">支出支付方式</option>
+            <option value="income">收入收款方式</option>
+          </select>
+          <input type="text" id="newPaymentName" placeholder="輸入新的方式名稱（如：Apple Pay、街口）..." />
+          <button type="button" class="primary" id="saveNewPaymentBtn">新增</button>
+        </div>
+        <div class="status-msg" id="paymentModalStatusMsg"></div>
+
+        <div class="cat-section-label">支出支付方式</div>
+        <div class="cat-tag-list" id="expensePaymentList"></div>
+
+        <div class="cat-section-label">收入收款方式</div>
+        <div class="cat-tag-list" id="incomePaymentList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 雲端設定視窗 -->
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>雲端同步設定</h3>
+        <button type="button" id="closeSettingsModalBtn">關閉</button>
+      </div>
+      <div class="form-group">
+        <label for="gasUrlInput">Google Apps Script 網頁應用程式網址（/exec）</label>
+        <input
+          type="url"
+          id="gasUrlInput"
+          placeholder="https://script.google.com/macros/s/.../exec"
+        />
+        <p class="help-text">
+          填入後即可跨裝置同步至你的 Google 試算表（records 分頁）。若留空則僅使用本機瀏覽器儲存。
+        </p>
+      </div>
+      <div class="status-msg" id="settingsStatusMsg"></div>
+      <div class="modal-actions">
+        <button type="button" id="testGasUrlBtn">測試連線並載入</button>
+        <div class="modal-actions-right">
+          <button type="button" id="clearGasUrlBtn">清除網址</button>
+          <button type="button" class="primary" id="saveSettingsBtn">儲存設定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 信用卡管理視窗 -->
+  <div class="modal-backdrop" id="cardModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>管理信用卡 / 發卡銀行</h3>
+        <button type="button" id="closeCardModalBtn">關閉</button>
+      </div>
+      <div class="add-cat-row">
+        <input type="text" id="newCardName" placeholder="輸入銀行或卡片名稱（如：台新 GoGo）..." />
+        <button type="button" class="primary" id="saveNewCardBtn">新增</button>
+      </div>
+      <div class="status-msg" id="cardModalStatusMsg"></div>
+
+      <div class="cat-section-label">已建立的信用卡清單</div>
+      <div class="cat-tag-list" id="creditCardTagList"></div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "personal_expense_tracker_v5";
+    const CATEGORY_KEY = "personal_expense_categories_v5";
+    const PAYMENT_KEY = "personal_expense_payments_v5";
+    const CARDS_KEY = "personal_expense_cards_v5";
+    const GAS_URL_KEY = "personal_expense_gas_url_v5";
+    const THEME_KEY = "personal_expense_theme_v5";
+
+    const DEFAULT_GAS_URL = "";
+
+    const DEFAULT_CATEGORIES = {
+      expense: ["早餐", "午餐", "晚餐", "飲品點心", "交通", "日用品", "娛樂", "房租水電", "醫療", "服飾美妝", "網購", "其他支出"],
+      income: ["薪資", "獎金", "投資理財", "兼職外快", "其他收入"]
+    };
+
+    const DEFAULT_PAYMENT_METHODS = {
+      expense: ["現金", "信用卡", "LINE Pay / 行動支付", "金融卡 / 轉帳", "悠遊卡 / 一卡通"],
+      income: ["銀行轉帳", "現金", "其他入帳"]
+    };
+
+    const DEFAULT_CARDS = [
+      "國泰世華",
+      "中國信託",
+      "玉山銀行",
+      "台新銀行",
+      "富邦銀行",
+      "永豐銀行",
+      "聯邦銀行",
+      "星展銀行"
+    ];
+
+    // Safe Storage Fallback
+    const memoryStorage = {};
+    function readStorage(key) {
+      try {
+        const val = window.localStorage.getItem(key);
+        return val !== null ? val : (memoryStorage[key] || null);
+      } catch (e) {
+        return memoryStorage[key] || null;
+      }
+    }
+    function writeStorage(key, value) {
+      memoryStorage[key] = value;
+      try {
+        window.localStorage.setItem(key, value);
+      } catch (e) {}
+    }
+
+    // Theme Setup (Default: Dark eye-care mode)
+    const toggleThemeBtn = document.getElementById("toggleThemeBtn");
+    function applyTheme(mode) {
+      if (mode === "light") {
+        document.body.classList.add("light-mode");
+        toggleThemeBtn.textContent = "深色護眼模式";
+      } else {
+        document.body.classList.remove("light-mode");
+        toggleThemeBtn.textContent = "淺色模式";
+      }
+      writeStorage(THEME_KEY, mode);
+    }
+
+    toggleThemeBtn.addEventListener("click", () => {
+      const isLight = document.body.classList.contains("light-mode");
+      applyTheme(isLight ? "dark" : "light");
+    });
+
+    applyTheme(readStorage(THEME_KEY) || "dark");
+
+    function getGasUrl() {
+      const saved = readStorage(GAS_URL_KEY);
+      return (saved !== null ? saved : DEFAULT_GAS_URL).trim();
+    }
+
+    function setGasUrl(url) {
+      writeStorage(GAS_URL_KEY, (url || "").trim());
+    }
+
+    let currentType = "expense";
+    let editingRecordId = null;
+    let editCurrentType = "expense";
+
+    let categories;
+    try {
+      const savedCats = JSON.parse(readStorage(CATEGORY_KEY) || "null");
+      categories = (savedCats && Array.isArray(savedCats.expense) && Array.isArray(savedCats.income))
+        ? savedCats
+        : JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
+    } catch (e) {
+      categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES));
+    }
+
+    let paymentMethods;
+    try {
+      const savedPays = JSON.parse(readStorage(PAYMENT_KEY) || "null");
+      paymentMethods = (savedPays && Array.isArray(savedPays.expense) && Array.isArray(savedPays.income))
+        ? savedPays
+        : JSON.parse(JSON.stringify(DEFAULT_PAYMENT_METHODS));
+    } catch (e) {
+      paymentMethods = JSON.parse(JSON.stringify(DEFAULT_PAYMENT_METHODS));
+    }
+
+    let creditCards;
+    try {
+      const savedCards = JSON.parse(readStorage(CARDS_KEY) || "null");
+      creditCards = (Array.isArray(savedCards) && savedCards.length > 0)
+        ? savedCards
+        : [...DEFAULT_CARDS];
+    } catch (e) {
+      creditCards = [...DEFAULT_CARDS];
+    }
+
+    let records;
+    try {
+      const savedRecs = JSON.parse(readStorage(STORAGE_KEY) || "[]");
+      records = Array.isArray(savedRecs) ? savedRecs : [];
+    } catch (e) {
+      records = [];
+    }
+
+    function normalizeRecord(r) {
+      const dateStr = String(r.date || "").slice(0, 10);
+      return {
+        id: Number(r.id) || Date.now(),
+        type: r.type === "income" ? "income" : "expense",
+        date: dateStr,
+        billMonth: r.billMonth || (dateStr ? dateStr.slice(0, 7) : ""),
+        category: r.category || "其他支出",
+        paymentMethod: r.paymentMethod || (r.type === "income" ? "銀行轉帳" : "現金"),
+        creditCard: r.creditCard || "",
+        amount: Number(r.amount) || 0,
+        note: r.note || "",
+        details: r.details || r.detail || ""
+      };
+    }
+
+    records = records.map(normalizeRecord);
+
+    // Elements
+    const syncStatusPill = document.getElementById("syncStatusPill");
+    const dateInput = document.getElementById("dateInput");
+    const billMonthInput = document.getElementById("billMonthInput");
+    const categoryInput = document.getElementById("categoryInput");
+    const paymentMethodInput = document.getElementById("paymentMethodInput");
+    const creditCardBox = document.getElementById("creditCardBox");
+    const creditCardInput = document.getElementById("creditCardInput");
+    const amountInput = document.getElementById("amountInput");
+    const noteInput = document.getElementById("noteInput");
+    const detailsInput = document.getElementById("detailsInput");
+    const formStatusMsg = document.getElementById("formStatusMsg");
+    const recordForm = document.getElementById("recordForm");
+    const typeButtons = document.querySelectorAll("#recordForm .type-btn");
+
+    // Edit Modal Elements
+    const editRecordModal = document.getElementById("editRecordModal");
+    const editRecordForm = document.getElementById("editRecordForm");
+    const editTypeExpenseBtn = document.getElementById("editTypeExpenseBtn");
+    const editTypeIncomeBtn = document.getElementById("editTypeIncomeBtn");
+    const editDateInput = document.getElementById("editDateInput");
+    const editBillMonthInput = document.getElementById("editBillMonthInput");
+    const editCategoryInput = document.getElementById("editCategoryInput");
+    const editPaymentMethodInput = document.getElementById("editPaymentMethodInput");
+    const editCreditCardBox = document.getElementById("editCreditCardBox");
+    const editCreditCardInput = document.getElementById("editCreditCardInput");
+    const editAmountInput = document.getElementById("editAmountInput");
+    const editDetailsInput = document.getElementById("editDetailsInput");
+    const editNoteInput = document.getElementById("editNoteInput");
+    const editModalStatusMsg = document.getElementById("editModalStatusMsg");
+
+    const inlineCardBox = document.getElementById("inlineCardBox");
+    const inlineCardInput = document.getElementById("inlineCardInput");
+    const inlineCardStatusMsg = document.getElementById("inlineCardStatusMsg");
+
+    const billMonthFilter = document.getElementById("billMonthFilter");
+    const typeFilter = document.getElementById("typeFilter");
+    const categoryFilter = document.getElementById("categoryFilter");
+    const paymentFilter = document.getElementById("paymentFilter");
+
+    const totalIncomeEl = document.getElementById("totalIncome");
+    const totalExpenseEl = document.getElementById("totalExpense");
+    const netBalanceEl = document.getElementById("netBalance");
+    const recordListEl = document.getElementById("recordList");
+
+    const statsGrid = document.getElementById("statsGrid");
+    const cardSummaryBox = document.getElementById("cardSummaryBox");
+    const totalCardSpendEl = document.getElementById("totalCardSpend");
+    const cardSummaryList = document.getElementById("cardSummaryList");
+    const breakdownBox = document.getElementById("breakdownBox");
+    const breakdownList = document.getElementById("breakdownList");
+
+    // Unified Manage Modal (Category + Payment Method)
+    const manageModal = document.getElementById("manageModal");
+    const managerTabBtns = document.querySelectorAll(".manager-tab-btn");
+    const panelCategory = document.getElementById("panel-category");
+    const panelPayment = document.getElementById("panel-payment");
+
+    const newCatType = document.getElementById("newCatType");
+    const newCatName = document.getElementById("newCatName");
+    const modalStatusMsg = document.getElementById("modalStatusMsg");
+    const expenseCatList = document.getElementById("expenseCatList");
+    const incomeCatList = document.getElementById("incomeCatList");
+
+    const newPaymentType = document.getElementById("newPaymentType");
+    const newPaymentName = document.getElementById("newPaymentName");
+    const paymentModalStatusMsg = document.getElementById("paymentModalStatusMsg");
+    const expensePaymentList = document.getElementById("expensePaymentList");
+    const incomePaymentList = document.getElementById("incomePaymentList");
+
+    // Settings Modal
+    const settingsModal = document.getElementById("settingsModal");
+    const gasUrlInput = document.getElementById("gasUrlInput");
+    const settingsStatusMsg = document.getElementById("settingsStatusMsg");
+
+    // Card Modal
+    const cardModal = document.getElementById("cardModal");
+    const newCardName = document.getElementById("newCardName");
+    const cardModalStatusMsg = document.getElementById("cardModalStatusMsg");
+    const creditCardTagList = document.getElementById("creditCardTagList");
+
+    // Initialize defaults
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    dateInput.value = `${yyyy}-${mm}-${dd}`;
+    billMonthInput.value = `${yyyy}-${mm}`;
+    billMonthFilter.value = `${yyyy}-${mm}`;
+
+    dateInput.addEventListener("change", () => {
+      if (dateInput.value) {
+        billMonthInput.value = dateInput.value.slice(0, 7);
+      }
+    });
+
+    editDateInput.addEventListener("change", () => {
+      if (editDateInput.value) {
+        editBillMonthInput.value = editDateInput.value.slice(0, 7);
+      }
+    });
+
+    function setSyncBadge(state, text) {
+      syncStatusPill.className = "sync-pill" + (state ? ` ${state}` : "");
+      syncStatusPill.textContent = text;
+    }
+
+    function updateSyncIndicator() {
+      const url = getGasUrl();
+      if (!url) {
+        setSyncBadge("", "單機模式");
+      } else {
+        setSyncBadge("connected", "已設定雲端");
+      }
+    }
+
+    function showStatus(el, text, isOk) {
+      el.textContent = text;
+      el.className = "status-msg " + (isOk ? "ok" : "err");
+      setTimeout(() => {
+        if (el.textContent === text) {
+          el.textContent = "";
+          el.className = "status-msg";
+        }
+      }, 3000);
+    }
+
+    function saveCategories() {
+      writeStorage(CATEGORY_KEY, JSON.stringify(categories));
+    }
+
+    function savePaymentMethods() {
+      writeStorage(PAYMENT_KEY, JSON.stringify(paymentMethods));
+    }
+
+    function saveCreditCards() {
+      writeStorage(CARDS_KEY, JSON.stringify(creditCards));
+    }
+
+    function saveRecords() {
+      writeStorage(STORAGE_KEY, JSON.stringify(records));
+    }
+
+    // Apps Script API helpers
+    async function fetchRecordsFromCloud(customUrl) {
+      const url = (customUrl !== undefined ? customUrl : getGasUrl()).trim();
+      if (!url) return { ok: false, reason: "no_url" };
+      setSyncBadge("", "同步中...");
+      const sep = url.includes("?") ? "&" : "?";
+      const res = await fetch(`${url}${sep}action=list&_t=${Date.now()}`, {
+        method: "GET"
+      });
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      const rawList = Array.isArray(data) ? data : (Array.isArray(data.records) ? data.records : []);
+      records = rawList.map(normalizeRecord);
+      saveRecords();
+      render();
+      setSyncBadge("connected", "雲端已同步");
+      return { ok: true, count: records.length };
+    }
+
+    async function sendActionToCloud(payload) {
+      const url = getGasUrl();
+      if (!url) return { ok: false, skipped: true };
+      setSyncBadge("", "寫入雲端中...");
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        setSyncBadge("connected", "雲端已同步");
+        return { ok: true };
+      } catch (err) {
+        setSyncBadge("error", "雲端同步失敗");
+        throw err;
+      }
+    }
+
+    // Settings Modal Events
+    document.getElementById("openSettingsBtn").addEventListener("click", () => {
+      gasUrlInput.value = getGasUrl();
+      settingsStatusMsg.textContent = "";
+      settingsStatusMsg.className = "status-msg";
+      settingsModal.classList.add("open");
+      gasUrlInput.focus();
+    });
+
+    document.getElementById("closeSettingsModalBtn").addEventListener("click", () => {
+      settingsModal.classList.remove("open");
+    });
+
+    settingsModal.addEventListener("click", e => {
+      if (e.target === settingsModal) settingsModal.classList.remove("open");
+    });
+
+    document.getElementById("clearGasUrlBtn").addEventListener("click", () => {
+      gasUrlInput.value = "";
+      setGasUrl("");
+      updateSyncIndicator();
+      showStatus(settingsStatusMsg, "已清除部署網址，切換為單機模式", true);
+    });
+
+    document.getElementById("testGasUrlBtn").addEventListener("click", async () => {
+      const url = gasUrlInput.value.trim();
+      if (!url) {
+        showStatus(settingsStatusMsg, "請先輸入 Apps Script 網址", false);
+        return;
+      }
+      if (!url.includes("script.google.com")) {
+        showStatus(settingsStatusMsg, "請確認是否為 Google Apps Script 網址", false);
+        return;
+      }
+      try {
+        showStatus(settingsStatusMsg, "正在連線測試...", true);
+        const result = await fetchRecordsFromCloud(url);
+        setGasUrl(url);
+        showStatus(settingsStatusMsg, `連線成功！已載入 ${result.count} 筆紀錄`, true);
+      } catch (err) {
+        setSyncBadge("error", "連線失敗");
+        showStatus(settingsStatusMsg, `連線失敗：${err.message}（請確認部署權限為「所有人」且已實作 doGet）`, false);
+      }
+    });
+
+    document.getElementById("saveSettingsBtn").addEventListener("click", async () => {
+      const url = gasUrlInput.value.trim();
+      if (url && !url.endsWith("/exec")) {
+        showStatus(settingsStatusMsg, "Apps Script 網頁應用程式網址通常以 /exec 結尾，請再確認一次", false);
+        return;
+      }
+      setGasUrl(url);
+      updateSyncIndicator();
+      if (url) {
+        try {
+          await fetchRecordsFromCloud(url);
+          showStatus(settingsStatusMsg, "設定已儲存並完成雲端同步", true);
+          setTimeout(() => settingsModal.classList.remove("open"), 700);
+        } catch (err) {
+          showStatus(settingsStatusMsg, `網址已儲存，但目前無法讀取雲端資料：${err.message}`, false);
+        }
+      } else {
+        showStatus(settingsStatusMsg, "已儲存為單機模式", true);
+        setTimeout(() => settingsModal.classList.remove("open"), 600);
+      }
+    });
+
+    document.getElementById("refreshCloudBtn").addEventListener("click", async () => {
+      if (!getGasUrl()) {
+        alert("尚未設定 Apps Script 網址，請先點擊右上角「設定」。");
+        return;
+      }
+      try {
+        await fetchRecordsFromCloud();
+      } catch (err) {
+        alert(`重新同步失敗：${err.message}`);
+      }
+    });
+
+    function populateSelectList(selectEl, list, selectedVal) {
+      const items = Array.isArray(list) ? [...list] : [];
+      if (selectedVal && !items.includes(selectedVal)) {
+        items.unshift(selectedVal);
+      }
+      selectEl.innerHTML = "";
+      items.forEach(val => {
+        const opt = document.createElement("option");
+        opt.value = val;
+        opt.textContent = val;
+        selectEl.appendChild(opt);
+      });
+      if (selectedVal && items.includes(selectedVal)) {
+        selectEl.value = selectedVal;
+      }
+    }
+
+    function updateCategoryOptions(selectedVal) {
+      const list = categories[currentType] || [];
+      const prev = selectedVal || categoryInput.value;
+      populateSelectList(categoryInput, list, prev);
+    }
+
+    function updatePaymentOptions(selectedVal) {
+      const methods = paymentMethods[currentType] || [];
+      const prev = selectedVal || paymentMethodInput.value;
+      populateSelectList(paymentMethodInput, methods, prev);
+      toggleCreditCardBox();
+    }
+
+    function toggleCreditCardBox() {
+      if (currentType === "expense" && paymentMethodInput.value === "信用卡") {
+        creditCardBox.classList.add("show");
+      } else {
+        creditCardBox.classList.remove("show");
+      }
+    }
+
+    paymentMethodInput.addEventListener("change", toggleCreditCardBox);
+
+    function updateCreditCardOptions(selectedCard) {
+      populateSelectList(creditCardInput, creditCards, selectedCard);
+    }
+
+    // Edit Modal Select Helpers
+    function updateEditTypeUI(type) {
+      editCurrentType = type === "income" ? "income" : "expense";
+      editTypeExpenseBtn.classList.toggle("active", editCurrentType === "expense");
+      editTypeIncomeBtn.classList.toggle("active", editCurrentType === "income");
+    }
+
+    function updateEditCategoryOptions(selectedVal) {
+      populateSelectList(editCategoryInput, categories[editCurrentType] || [], selectedVal || editCategoryInput.value);
+    }
+
+    function updateEditPaymentOptions(selectedVal) {
+      populateSelectList(editPaymentMethodInput, paymentMethods[editCurrentType] || [], selectedVal || editPaymentMethodInput.value);
+      toggleEditCreditCardBox();
+    }
+
+    function toggleEditCreditCardBox() {
+      if (editCurrentType === "expense" && editPaymentMethodInput.value === "信用卡") {
+        editCreditCardBox.classList.add("show");
+      } else {
+        editCreditCardBox.classList.remove("show");
+      }
+    }
+
+    editTypeExpenseBtn.addEventListener("click", () => {
+      updateEditTypeUI("expense");
+      updateEditCategoryOptions();
+      updateEditPaymentOptions();
+    });
+
+    editTypeIncomeBtn.addEventListener("click", () => {
+      updateEditTypeUI("income");
+      updateEditCategoryOptions();
+      updateEditPaymentOptions();
+    });
+
+    editPaymentMethodInput.addEventListener("change", toggleEditCreditCardBox);
+
+    function openEditRecordModal(rec) {
+      editingRecordId = rec.id;
+      updateEditTypeUI(rec.type);
+      editDateInput.value = rec.date || `${yyyy}-${mm}-${dd}`;
+      editBillMonthInput.value = rec.billMonth || (rec.date ? rec.date.slice(0, 7) : `${yyyy}-${mm}`);
+      updateEditCategoryOptions(rec.category);
+      updateEditPaymentOptions(rec.paymentMethod);
+      populateSelectList(editCreditCardInput, creditCards, rec.creditCard);
+      editAmountInput.value = rec.amount || "";
+      editDetailsInput.value = rec.details || "";
+      editNoteInput.value = rec.note || "";
+      editModalStatusMsg.textContent = "";
+      editModalStatusMsg.className = "status-msg";
+      editRecordModal.classList.add("open");
+      editAmountInput.focus();
+    }
+
+    function closeEditRecordModal() {
+      editingRecordId = null;
+      editRecordModal.classList.remove("open");
+    }
+
+    document.getElementById("closeEditModalBtn").addEventListener("click", closeEditRecordModal);
+    document.getElementById("cancelEditBtn").addEventListener("click", closeEditRecordModal);
+    editRecordModal.addEventListener("click", e => {
+      if (e.target === editRecordModal) closeEditRecordModal();
+    });
+
+    editRecordForm.addEventListener("submit", async e => {
+      e.preventDefault();
+      if (editingRecordId === null) return;
+
+      const amount = Number(editAmountInput.value);
+      if (!amount || amount <= 0) {
+        showStatus(editModalStatusMsg, "請輸入大於 0 的金額", false);
+        return;
+      }
+
+      const idx = records.findIndex(r => r.id === editingRecordId);
+      if (idx === -1) {
+        closeEditRecordModal();
+        return;
+      }
+
+      const payMethod = editPaymentMethodInput.value;
+      const cardName = (editCurrentType === "expense" && payMethod === "信用卡")
+        ? editCreditCardInput.value
+        : "";
+
+      const updatedRecord = {
+        ...records[idx],
+        type: editCurrentType,
+        date: editDateInput.value,
+        billMonth: editBillMonthInput.value || editDateInput.value.slice(0, 7),
+        category: editCategoryInput.value,
+        paymentMethod: payMethod,
+        creditCard: cardName,
+        amount: amount,
+        note: editNoteInput.value.trim(),
+        details: editDetailsInput.value.trim()
+      };
+
+      records[idx] = updatedRecord;
+      saveRecords();
+      render();
+      closeEditRecordModal();
+
+      if (getGasUrl()) {
+        try {
+          await sendActionToCloud({ action: "update", record: updatedRecord });
+          showStatus(formStatusMsg, "已更新紀錄並同步至雲端試算表", true);
+        } catch (err) {
+          showStatus(formStatusMsg, `本機已更新，但雲端同步失敗：${err.message}`, false);
+        }
+      } else {
+        showStatus(formStatusMsg, "已更新該筆紀錄", true);
+      }
+    });
+
+    function updateFilterDropdowns() {
+      const prevCat = categoryFilter.value;
+      const allCats = Array.from(new Set([...categories.expense, ...categories.income]));
+      categoryFilter.innerHTML = "";
+      const allCatOpt = document.createElement("option");
+      allCatOpt.value = "all";
+      allCatOpt.textContent = "所有分類";
+      categoryFilter.appendChild(allCatOpt);
+      allCats.forEach(cat => {
+        const opt = document.createElement("option");
+        opt.value = cat;
+        opt.textContent = cat;
+        categoryFilter.appendChild(opt);
+      });
+      if (prevCat === "all" || allCats.includes(prevCat)) {
+        categoryFilter.value = prevCat;
+      }
+
+      const prevPay = paymentFilter.value;
+      paymentFilter.innerHTML = "";
+
+      const allPayOpt = document.createElement("option");
+      allPayOpt.value = "all";
+      allPayOpt.textContent = "全部方式";
+      paymentFilter.appendChild(allPayOpt);
+
+      const allMethods = Array.from(new Set([...paymentMethods.expense, ...paymentMethods.income]));
+      allMethods.forEach(m => {
+        const opt = document.createElement("option");
+        opt.value = `method:${m}`;
+        opt.textContent = m === "信用卡" ? "所有信用卡" : m;
+        paymentFilter.appendChild(opt);
+      });
+
+      if (creditCards.length > 0) {
+        const group = document.createElement("optgroup");
+        group.label = "依指定銀行信用卡篩選";
+        creditCards.forEach(c => {
+          const opt = document.createElement("option");
+          opt.value = `card:${c}`;
+          opt.textContent = `💳 ${c}`;
+          group.appendChild(opt);
+        });
+        paymentFilter.appendChild(group);
+      }
+
+      const validValues = Array.from(paymentFilter.querySelectorAll("option")).map(o => o.value);
+      if (validValues.includes(prevPay)) {
+        paymentFilter.value = prevPay;
+      }
+    }
+
+    // Unified Manager Tab Switching
+    function switchManagerTab(tabName) {
+      managerTabBtns.forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.tab === tabName);
+      });
+      panelCategory.classList.toggle("active", tabName === "category");
+      panelPayment.classList.toggle("active", tabName === "payment");
+      if (tabName === "category") {
+        newCatName.focus();
+      } else {
+        newPaymentName.focus();
+      }
+    }
+
+    managerTabBtns.forEach(btn => {
+      btn.addEventListener("click", () => switchManagerTab(btn.dataset.tab));
+    });
+
+    // Payment Method Management
+    function renderPaymentChips(container, type) {
+      container.innerHTML = "";
+      const list = paymentMethods[type] || [];
+      list.forEach(method => {
+        const chip = document.createElement("span");
+        chip.className = "cat-chip";
+
+        const labelSpan = document.createElement("span");
+        labelSpan.textContent = method;
+        chip.appendChild(labelSpan);
+
+        if (list.length > 1) {
+          const delBtn = document.createElement("button");
+          delBtn.type = "button";
+          delBtn.title = "刪除此方式";
+          delBtn.textContent = "×";
+          delBtn.addEventListener("click", () => {
+            paymentMethods[type] = paymentMethods[type].filter(m => m !== method);
+            savePaymentMethods();
+            updatePaymentOptions();
+            updateFilterDropdowns();
+            renderPaymentManager();
+            showStatus(paymentModalStatusMsg, `已刪除「${method}」`, true);
+          });
+          chip.appendChild(delBtn);
+        }
+        container.appendChild(chip);
+      });
+    }
+
+    function renderPaymentManager() {
+      renderPaymentChips(expensePaymentList, "expense");
+      renderPaymentChips(incomePaymentList, "income");
+    }
+
+    function addPaymentMethod(type, rawName, statusEl) {
+      const name = (rawName || "").trim();
+      if (!name) {
+        if (statusEl) showStatus(statusEl, "請先輸入支付 / 收款方式名稱", false);
+        return false;
+      }
+      if (paymentMethods[type].includes(name)) {
+        if (statusEl) showStatus(statusEl, `「${name}」已經在清單中囉！`, false);
+        if (type === currentType) paymentMethodInput.value = name;
+        return false;
+      }
+      paymentMethods[type].push(name);
+      savePaymentMethods();
+      updatePaymentOptions(type === currentType ? name : undefined);
+      updateFilterDropdowns();
+      renderPaymentManager();
+      if (statusEl) showStatus(statusEl, `已新增「${name}」`, true);
+      return true;
+    }
+
+    // Category Management with Drag & Drop Reordering
+    let draggedCat = { type: null, index: null };
+
+    function reorderCategory(type, fromIndex, toIndex) {
+      const list = categories[type];
+      if (!Array.isArray(list)) return;
+      if (
+        fromIndex === null ||
+        toIndex === null ||
+        fromIndex === toIndex ||
+        fromIndex < 0 ||
+        toIndex < 0 ||
+        fromIndex >= list.length ||
+        toIndex >= list.length
+      ) {
+        return;
+      }
+      const [moved] = list.splice(fromIndex, 1);
+      list.splice(toIndex, 0, moved);
+      saveCategories();
+      updateCategoryOptions();
+      updateFilterDropdowns();
+      renderCategoryManager();
+      showStatus(modalStatusMsg, `已調整「${moved}」的順序`, true);
+    }
+
+    function renderCategoryChips(container, type) {
+      container.innerHTML = "";
+      const list = categories[type] || [];
+
+      container.addEventListener("dragover", e => {
+        if (draggedCat.type === type) {
+          e.preventDefault();
+        }
+      });
+
+      container.addEventListener("drop", e => {
+        if (draggedCat.type !== type) return;
+        e.preventDefault();
+        const targetChip = e.target.closest(".cat-chip.draggable");
+        if (!targetChip) {
+          reorderCategory(type, draggedCat.index, list.length - 1);
+        }
+      });
+
+      list.forEach((cat, idx) => {
+        const chip = document.createElement("span");
+        chip.className = "cat-chip draggable";
+        chip.draggable = true;
+        chip.dataset.index = String(idx);
+
+        const handleSpan = document.createElement("span");
+        handleSpan.className = "drag-handle";
+        handleSpan.textContent = "⋮⋮";
+        handleSpan.title = "拖曳移動順序";
+        chip.appendChild(handleSpan);
+
+        const labelSpan = document.createElement("span");
+        labelSpan.textContent = cat;
+        chip.appendChild(labelSpan);
+
+        chip.addEventListener("dragstart", e => {
+          draggedCat = { type, index: idx };
+          chip.classList.add("dragging");
+          if (e.dataTransfer) {
+            e.dataTransfer.effectAllowed = "move";
+            e.dataTransfer.setData("text/plain", String(idx));
+          }
+        });
+
+        chip.addEventListener("dragenter", e => {
+          if (draggedCat.type === type && draggedCat.index !== idx) {
+            e.preventDefault();
+            chip.classList.add("drag-over");
+          }
+        });
+
+        chip.addEventListener("dragover", e => {
+          if (draggedCat.type === type && draggedCat.index !== idx) {
+            e.preventDefault();
+            if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+            chip.classList.add("drag-over");
+          }
+        });
+
+        chip.addEventListener("dragleave", () => {
+          chip.classList.remove("drag-over");
+        });
+
+        chip.addEventListener("drop", e => {
+          if (draggedCat.type !== type) return;
+          e.preventDefault();
+          e.stopPropagation();
+          chip.classList.remove("drag-over");
+          reorderCategory(type, draggedCat.index, idx);
+          draggedCat = { type: null, index: null };
+        });
+
+        chip.addEventListener("dragend", () => {
+          chip.classList.remove("dragging");
+          container.querySelectorAll(".cat-chip.drag-over").forEach(el => {
+            el.classList.remove("drag-over");
+          });
+          draggedCat = { type: null, index: null };
+        });
+
+        if (list.length > 1) {
+          const delBtn = document.createElement("button");
+          delBtn.type = "button";
+          delBtn.title = "刪除此分類";
+          delBtn.textContent = "×";
+          delBtn.addEventListener("click", e => {
+            e.stopPropagation();
+            categories[type] = categories[type].filter(c => c !== cat);
+            saveCategories();
+            updateCategoryOptions();
+            updateFilterDropdowns();
+            renderCategoryManager();
+            showStatus(modalStatusMsg, `已刪除「${cat}」`, true);
+          });
+          chip.appendChild(delBtn);
+        }
+        container.appendChild(chip);
+      });
+    }
+
+    function renderCategoryManager() {
+      renderCategoryChips(expenseCatList, "expense");
+      renderCategoryChips(incomeCatList, "income");
+    }
+
+    function addCategory(type, rawName, statusEl) {
+      const name = (rawName || "").trim();
+      if (!name) {
+        if (statusEl) showStatus(statusEl, "請先輸入分類名稱", false);
+        return false;
+      }
+      if (categories[type].includes(name)) {
+        if (statusEl) showStatus(statusEl, `「${name}」已經在清單中囉！`, false);
+        if (type === currentType) categoryInput.value = name;
+        return false;
+      }
+      categories[type].push(name);
+      saveCategories();
+      updateCategoryOptions(type === currentType ? name : undefined);
+      updateFilterDropdowns();
+      renderCategoryManager();
+      if (statusEl) showStatus(statusEl, `已新增「${name}」分類`, true);
+      return true;
+    }
+
+    // Credit Card Management
+    function renderCreditCardManager() {
+      creditCardTagList.innerHTML = "";
+      creditCards.forEach(card => {
+        const chip = document.createElement("span");
+        chip.className = "cat-chip";
+
+        const labelSpan = document.createElement("span");
+        labelSpan.textContent = card;
+        chip.appendChild(labelSpan);
+
+        if (creditCards.length > 1) {
+          const delBtn = document.createElement("button");
+          delBtn.type = "button";
+          delBtn.title = "刪除此卡片";
+          delBtn.textContent = "×";
+          delBtn.addEventListener("click", () => {
+            creditCards = creditCards.filter(c => c !== card);
+            saveCreditCards();
+            updateCreditCardOptions();
+            updateFilterDropdowns();
+            renderCreditCardManager();
+            showStatus(cardModalStatusMsg, `已刪除「${card}」`, true);
+          });
+          chip.appendChild(delBtn);
+        }
+        creditCardTagList.appendChild(chip);
+      });
+    }
+
+    function addCreditCard(rawName, statusEl) {
+      const name = (rawName || "").trim();
+      if (!name) {
+        if (statusEl) showStatus(statusEl, "請輸入銀行或卡片名稱", false);
+        return false;
+      }
+      if (creditCards.includes(name)) {
+        if (statusEl) showStatus(statusEl, `「${name}」已經在清單中囉！`, false);
+        creditCardInput.value = name;
+        return false;
+      }
+      creditCards.push(name);
+      saveCreditCards();
+      updateCreditCardOptions(name);
+      updateFilterDropdowns();
+      renderCreditCardManager();
+      if (statusEl) showStatus(statusEl, `已新增「${name}」`, true);
+      return true;
+    }
+
+    // Inline Card Add
+    document.getElementById("toggleInlineCardBtn").addEventListener("click", () => {
+      inlineCardBox.classList.toggle("show");
+      if (inlineCardBox.classList.contains("show")) inlineCardInput.focus();
+    });
+
+    document.getElementById("inlineSaveCardBtn").addEventListener("click", () => {
+      if (addCreditCard(inlineCardInput.value, inlineCardStatusMsg)) {
+        inlineCardInput.value = "";
+        inlineCardBox.classList.remove("show");
+      }
+    });
+
+    inlineCardInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (addCreditCard(inlineCardInput.value, inlineCardStatusMsg)) {
+          inlineCardInput.value = "";
+          inlineCardBox.classList.remove("show");
+        }
+      }
+    });
+
+    // Unified Manage Modal Events
+    document.getElementById("manageBtn").addEventListener("click", () => {
+      newCatType.value = currentType;
+      newPaymentType.value = currentType;
+      renderCategoryManager();
+      renderPaymentManager();
+      manageModal.classList.add("open");
+      const activeTab = document.querySelector(".manager-tab-btn.active")?.dataset.tab || "category";
+      switchManagerTab(activeTab);
+    });
+
+    document.getElementById("closeManageModalBtn").addEventListener("click", () => {
+      manageModal.classList.remove("open");
+    });
+
+    manageModal.addEventListener("click", e => {
+      if (e.target === manageModal) manageModal.classList.remove("open");
+    });
+
+    document.getElementById("saveNewCatBtn").addEventListener("click", () => {
+      if (addCategory(newCatType.value, newCatName.value, modalStatusMsg)) {
+        newCatName.value = "";
+      }
+    });
+
+    newCatName.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (addCategory(newCatType.value, newCatName.value, modalStatusMsg)) {
+          newCatName.value = "";
+        }
+      }
+    });
+
+    document.getElementById("saveNewPaymentBtn").addEventListener("click", () => {
+      if (addPaymentMethod(newPaymentType.value, newPaymentName.value, paymentModalStatusMsg)) {
+        newPaymentName.value = "";
+      }
+    });
+
+    newPaymentName.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (addPaymentMethod(newPaymentType.value, newPaymentName.value, paymentModalStatusMsg)) {
+          newPaymentName.value = "";
+        }
+      }
+    });
+
+    // Card Modal Events
+    document.getElementById("manageCardsBtn").addEventListener("click", () => {
+      renderCreditCardManager();
+      cardModal.classList.add("open");
+      newCardName.focus();
+    });
+
+    document.getElementById("closeCardModalBtn").addEventListener("click", () => {
+      cardModal.classList.remove("open");
+    });
+
+    cardModal.addEventListener("click", e => {
+      if (e.target === cardModal) cardModal.classList.remove("open");
+    });
+
+    document.getElementById("saveNewCardBtn").addEventListener("click", () => {
+      if (addCreditCard(newCardName.value, cardModalStatusMsg)) {
+        newCardName.value = "";
+      }
+    });
+
+    newCardName.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (addCreditCard(newCardName.value, cardModalStatusMsg)) {
+          newCardName.value = "";
+        }
+      }
+    });
+
+    typeButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        currentType = btn.dataset.type;
+        typeButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        updateCategoryOptions();
+        updatePaymentOptions();
+      });
+    });
+
+    function formatCurrency(num) {
+      return "NT$ " + num.toLocaleString("zh-TW");
+    }
+
+    function getFilteredRecords() {
+      const bmVal = billMonthFilter.value;
+      const tVal = typeFilter.value;
+      const cVal = categoryFilter.value;
+      const pVal = paymentFilter.value;
+
+      return records
+        .filter(r => !bmVal || r.billMonth === bmVal)
+        .filter(r => tVal === "all" || r.type === tVal)
+        .filter(r => cVal === "all" || r.category === cVal)
+        .filter(r => {
+          if (pVal === "all") return true;
+          if (pVal.startsWith("method:")) {
+            return r.paymentMethod === pVal.slice(7);
+          }
+          if (pVal.startsWith("card:")) {
+            return r.paymentMethod === "信用卡" && r.creditCard === pVal.slice(5);
+          }
+          return true;
+        })
+        .sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+    }
+
+    function renderBarRows(container, entries, totalAmount) {
+      container.innerHTML = "";
+      entries.forEach(([label, amt]) => {
+        const pct = totalAmount > 0 ? Math.round((amt / totalAmount) * 100) : 0;
+        const row = document.createElement("div");
+        row.className = "bar-row";
+
+        const info = document.createElement("div");
+        info.className = "bar-info";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = label;
+        const valSpan = document.createElement("span");
+        valSpan.textContent = `${formatCurrency(amt)} (${pct}%)`;
+        info.appendChild(nameSpan);
+        info.appendChild(valSpan);
+
+        const track = document.createElement("div");
+        track.className = "bar-track";
+        const fill = document.createElement("div");
+        fill.className = "bar-fill";
+        fill.style.width = `${pct}%`;
+        track.appendChild(fill);
+
+        row.appendChild(info);
+        row.appendChild(track);
+        container.appendChild(row);
+      });
+    }
+
+    function render() {
+      const filtered = getFilteredRecords();
+      const bmVal = billMonthFilter.value;
+
+      const billRecords = records.filter(r => !bmVal || r.billMonth === bmVal);
+      const income = billRecords.filter(r => r.type === "income").reduce((s, r) => s + r.amount, 0);
+      const expense = billRecords.filter(r => r.type === "expense").reduce((s, r) => s + r.amount, 0);
+      const balance = income - expense;
+
+      totalIncomeEl.textContent = formatCurrency(income);
+      totalExpenseEl.textContent = formatCurrency(expense);
+      netBalanceEl.textContent = (balance < 0 ? "-" : "") + formatCurrency(Math.abs(balance));
+      netBalanceEl.style.color = balance < 0 ? "var(--expense)" : "var(--text)";
+
+      const cardItems = billRecords.filter(r => r.type === "expense" && r.paymentMethod === "信用卡");
+      const hasCardStats = cardItems.length > 0 && typeFilter.value !== "income";
+      if (hasCardStats) {
+        const cardTotals = {};
+        let totalCard = 0;
+        cardItems.forEach(r => {
+          const bank = r.creditCard || "未指定銀行";
+          cardTotals[bank] = (cardTotals[bank] || 0) + r.amount;
+          totalCard += r.amount;
+        });
+        const sortedCards = Object.entries(cardTotals).sort((a, b) => b[1] - a[1]);
+        totalCardSpendEl.textContent = `合計 ${formatCurrency(totalCard)}`;
+        cardSummaryBox.style.display = "block";
+        renderBarRows(cardSummaryList, sortedCards, totalCard);
+      } else {
+        cardSummaryBox.style.display = "none";
+      }
+
+      const expenseItems = billRecords.filter(r => r.type === "expense");
+      const hasCatStats = expenseItems.length > 0 && typeFilter.value !== "income";
+      if (hasCatStats) {
+        const catTotals = {};
+        expenseItems.forEach(r => {
+          catTotals[r.category] = (catTotals[r.category] || 0) + r.amount;
+        });
+        const sortedCats = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
+        breakdownBox.style.display = "block";
+        renderBarRows(breakdownList, sortedCats, expense);
+      } else {
+        breakdownBox.style.display = "none";
+      }
+
+      statsGrid.style.display = (hasCardStats || hasCatStats) ? "grid" : "none";
+
+      recordListEl.innerHTML = "";
+      if (filtered.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.textContent = "目前沒有符合條件的記帳紀錄，從左側新增第一筆吧！";
+        recordListEl.appendChild(empty);
+        return;
+      }
+
+      filtered.forEach(r => {
+        const item = document.createElement("div");
+        item.className = "record-item";
+
+        const left = document.createElement("div");
+        left.className = "record-left";
+
+        const badge = document.createElement("span");
+        badge.className = `badge ${r.type}`;
+        badge.textContent = r.category;
+
+        const meta = document.createElement("div");
+        meta.className = "record-meta";
+
+        const detailDiv = document.createElement("div");
+        detailDiv.className = "record-details";
+        detailDiv.textContent = (r.details && r.details.trim()) ? r.details.trim() : (r.note || r.category);
+        meta.appendChild(detailDiv);
+
+        if (r.note && r.note.trim()) {
+          const noteDiv = document.createElement("div");
+          noteDiv.className = "record-note";
+          noteDiv.textContent = `備註：${r.note.trim()}`;
+          meta.appendChild(noteDiv);
+        }
+
+        const dateDiv = document.createElement("div");
+        dateDiv.className = "record-date";
+
+        const dSpan = document.createElement("span");
+        dSpan.textContent = `消費日：${r.date}`;
+        dateDiv.appendChild(dSpan);
+
+        const bSpan = document.createElement("span");
+        bSpan.className = "bill-tag";
+        bSpan.textContent = `帳單月：${r.billMonth}`;
+        dateDiv.appendChild(bSpan);
+
+        if (r.paymentMethod === "信用卡") {
+          const cSpan = document.createElement("span");
+          cSpan.className = "card-tag";
+          cSpan.textContent = `💳 ${r.creditCard || "信用卡"}`;
+          dateDiv.appendChild(cSpan);
+        } else if (r.paymentMethod) {
+          const pSpan = document.createElement("span");
+          pSpan.className = "pay-tag";
+          pSpan.textContent = r.paymentMethod;
+          dateDiv.appendChild(pSpan);
+        }
+
+        meta.appendChild(dateDiv);
+
+        left.appendChild(badge);
+        left.appendChild(meta);
+
+        const right = document.createElement("div");
+        right.className = "record-right";
+
+        const amtSpan = document.createElement("span");
+        amtSpan.className = `record-amount ${r.type}`;
+        amtSpan.textContent = `${r.type === "expense" ? "-" : "+"}${formatCurrency(r.amount)}`;
+
+        const editBtn = document.createElement("button");
+        editBtn.type = "button";
+        editBtn.className = "edit-btn";
+        editBtn.textContent = "編輯";
+        editBtn.addEventListener("click", () => {
+          openEditRecordModal(r);
+        });
+
+        const delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.className = "del-btn";
+        delBtn.textContent = "刪除";
+        delBtn.addEventListener("click", async () => {
+          records = records.filter(rec => rec.id !== r.id);
+          saveRecords();
+          render();
+          if (getGasUrl()) {
+            try {
+              await sendActionToCloud({ action: "delete", id: r.id });
+            } catch (err) {
+              showStatus(formStatusMsg, `本機已刪除，但雲端同步失敗：${err.message}`, false);
+            }
+          }
+        });
+
+        right.appendChild(amtSpan);
+        right.appendChild(editBtn);
+        right.appendChild(delBtn);
+
+        item.appendChild(left);
+        item.appendChild(right);
+        recordListEl.appendChild(item);
+      });
+    }
+
+    recordForm.addEventListener("submit", async e => {
+      e.preventDefault();
+      const amount = Number(amountInput.value);
+      if (!amount || amount <= 0) return;
+
+      const payMethod = paymentMethodInput.value;
+      const cardName = (currentType === "expense" && payMethod === "信用卡")
+        ? creditCardInput.value
+        : "";
+
+      const newRecord = {
+        id: Date.now(),
+        type: currentType,
+        date: dateInput.value,
+        billMonth: billMonthInput.value || dateInput.value.slice(0, 7),
+        category: categoryInput.value,
+        paymentMethod: payMethod,
+        creditCard: cardName,
+        amount: amount,
+        note: noteInput.value.trim(),
+        details: detailsInput.value.trim()
+      };
+
+      records.push(newRecord);
+      saveRecords();
+      amountInput.value = "";
+      noteInput.value = "";
+      detailsInput.value = "";
+      render();
+
+      if (getGasUrl()) {
+        try {
+          await sendActionToCloud({ action: "add", record: newRecord });
+          showStatus(formStatusMsg, "已儲存並同步至雲端試算表", true);
+        } catch (err) {
+          showStatus(formStatusMsg, `已存至本機，但雲端寫入失敗：${err.message}`, false);
+        }
+      }
+    });
+
+    [billMonthFilter, typeFilter, categoryFilter, paymentFilter].forEach(el => {
+      el.addEventListener("change", render);
+    });
+
+    document.getElementById("exportCsvBtn").addEventListener("click", () => {
+      const filtered = getFilteredRecords();
+      if (filtered.length === 0) {
+        alert("目前沒有可匯出的資料");
+        return;
+      }
+      const header = ["消費日期", "帳單月份", "類型", "分類", "支付方式", "信用卡別", "金額", "消費明細", "備註"];
+      const rows = filtered.map(r => [
+        r.date,
+        r.billMonth,
+        r.type === "expense" ? "支出" : "收入",
+        r.category,
+        r.paymentMethod || "",
+        r.creditCard || "",
+        r.amount,
+        `"${(r.details || "").replace(/"/g, '""')}"`,
+        `"${(r.note || "").replace(/"/g, '""')}"`
+      ]);
+      const csvContent = "\uFEFF" + [header, ...rows].map(e => e.join(",")).join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `記帳明細_${billMonthFilter.value || "全部"}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById("clearAllBtn").addEventListener("click", async () => {
+      if (confirm("確定要清空所有記帳資料嗎？此操作無法復原。")) {
+        records = [];
+        saveRecords();
+        render();
+        if (getGasUrl()) {
+          try {
+            await sendActionToCloud({ action: "clear" });
+            showStatus(formStatusMsg, "已清空本機與雲端紀錄", true);
+          } catch (err) {
+            showStatus(formStatusMsg, `本機已清空，但雲端清空失敗：${err.message}`, false);
+          }
+        }
+      }
+    });
+
+    updateCategoryOptions();
+    updatePaymentOptions();
+    updateCreditCardOptions();
+    updateFilterDropdowns();
+    updateSyncIndicator();
+    render();
+
+    if (getGasUrl()) {
+      fetchRecordsFromCloud().catch(err => {
+        setSyncBadge("error", "雲端離線/未就緒");
+        console.warn("Initial cloud sync failed:", err);
+      });
+    }
+  </script>
+</body>
+</html>
